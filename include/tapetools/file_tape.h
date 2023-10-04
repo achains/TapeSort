@@ -9,7 +9,7 @@ class FileTape : public Tape {
  public:
   FileTape();
 
-  void readBlock(int* block_ptr, size_t block_size) override;
+  size_t readBlock(int* block_ptr, size_t block_size) override;
 
   void open(const char* tape_path);
 
