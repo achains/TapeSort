@@ -1,5 +1,5 @@
 # Tape Tools Library
-set(TAPE_TOOLS_SRC tapetools/file_tape.cpp)
+set(TAPE_TOOLS_SRC tapetools/file_tape.cpp tapetools/sort/tape_sort.cpp)
 
 add_library(tape-tools SHARED ${TAPE_TOOLS_SRC})
 

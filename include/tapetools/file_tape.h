@@ -2,14 +2,18 @@
 
 #include "tape.h"
 
+#include <fstream>
+
 namespace tapetools {
-    class FileTape : public Tape {
-    public:
-        FileTape();
+class FileTape : public Tape {
+ public:
+  FileTape();
 
-        int readBlock(size_t block_size) override;
+  void readBlock(int* block_ptr, size_t block_size) override;
 
-    private:
-        const char *tape_path;
-    };
-}
+  void open(const char* tape_path);
+
+ private:
+  std::fstream tape_stream_;
+};
+}  // namespace tapetools
