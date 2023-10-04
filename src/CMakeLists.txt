@@ -1,5 +1,8 @@
 # Tape Tools Library
-set(TAPE_TOOLS_SRC tapetools/file_tape.cpp tapetools/sort/tape_sort.cpp)
+set(TAPE_TOOLS_SRC
+        tapetools/file_tape.cpp
+        tapetools/sort/tape_sort.cpp
+        tapetools/sort/block.cpp)
 
 add_library(tape-tools SHARED ${TAPE_TOOLS_SRC})
 
@@ -13,3 +16,4 @@ target_include_directories(
 
 
 add_executable(tape-sort main.cpp)
+target_link_libraries(tape-sort PRIVATE tape-tools)
