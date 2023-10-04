@@ -3,6 +3,10 @@
 #include <algorithm>
 
 namespace tapetools {
+
+TapeSort::TapeSort(Tape* input_tape, Tape* output_tape, size_t block_size, size_t max_buffer_size)
+    : input_tape_(input_tape), output_tape_(output_tape), block_size_(block_size), max_buffer_size_(max_buffer_size) {}
+
 void TapeSort::sort() {
   // Load K sorted blocks of size B into buffer
   fillBuffer();
@@ -37,5 +41,9 @@ void TapeSort::fillBuffer() {
     std::sort(tmp_block_data.begin(), tmp_block_data.end());
     buffer_queue_.emplace(std::make_unique<BufferBlock>(tmp_block_data));
   }
+}
+
+void TapeSort::writeSortedBlock(std::vector<int> const& sorted_block) {
+  output_tape_->writeBlock(sorted_block.data(), sorted_block.size());
 }
 }  // namespace tapetools

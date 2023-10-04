@@ -10,7 +10,7 @@
 namespace tapetools {
 class TapeSort {
  public:
-  TapeSort(const Tape* input_tape);
+  TapeSort(Tape* input_tape, Tape* output_tape, size_t block_size, size_t max_buffer_size);
 
   void sort();
 
@@ -19,6 +19,7 @@ class TapeSort {
   size_t max_buffer_size_;
   std::priority_queue<std::unique_ptr<BufferBlock>> buffer_queue_;
   std::shared_ptr<Tape> input_tape_;
+  std::shared_ptr<Tape> output_tape_;
 
   void fillBuffer();
 
