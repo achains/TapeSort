@@ -2,7 +2,7 @@
 set(TAPE_TOOLS_SRC
         tapetools/file_tape.cpp
         tapetools/sort/tape_sort.cpp
-        tapetools/sort/block.cpp)
+        tapetools/sort/buffer_block.cpp)
 
 add_library(tape-tools SHARED ${TAPE_TOOLS_SRC})
 

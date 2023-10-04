@@ -33,7 +33,9 @@ void TapeSort::fillBuffer() {
       return;
     }
 
-    buffer_queue_.emplace(std::make_unique<SortedBlock>(tmp_block_data));
+    // TODO: Create buffer queue values sort invariant
+    std::sort(tmp_block_data.begin(), tmp_block_data.end());
+    buffer_queue_.emplace(std::make_unique<BufferBlock>(tmp_block_data));
   }
 }
 }  // namespace tapetools
