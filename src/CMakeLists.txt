@@ -1,6 +1,7 @@
 # Tape Tools Library
 set(TAPE_TOOLS_SRC
         tapetools/file_tape.cpp
+        tapetools/file_tape_creator.cpp
         tapetools/sort/tape_sort.cpp
         tapetools/sort/buffer_block.cpp)
 
