@@ -6,11 +6,13 @@ namespace tapetools {
 FileTape::FileTape(const char* tape_path)
     : tape_stream_(tape_path, std::fstream::in | std::fstream::out | std::fstream::binary) {}
 
-int FileTape::read() {
-  int value;
+bool FileTape::read(int& value) {
   tape_stream_.read(reinterpret_cast<char*>(&value), sizeof(value));
+  if (tape_stream_.eof()) {
+    return false;
+  }
   tape_stream_.seekg(get_p_);
-  return value;
+  return true;
 }
 
 void FileTape::write(int value) {
@@ -45,8 +47,10 @@ void FileTape::updateStreamPos(std::streampos get_p, std::streampos put_p) {
 
 size_t FileTape::readBlock(int* block_ptr, size_t block_size) {
   size_t values_read_count = 0;
-  while (get_p_ != std::fstream::end && values_read_count < block_size) {
-    block_ptr[values_read_count++] = read();
+  bool read_code;
+  int value;
+  while ((read_code = read(value)) && values_read_count < block_size) {
+    block_ptr[values_read_count++] = value;
     moveForward();
   }
   return values_read_count;

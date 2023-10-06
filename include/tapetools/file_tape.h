@@ -11,7 +11,7 @@ class FileTape : public Tape {
 
   ~FileTape() = default;
 
-  virtual int read() override;
+  virtual bool read(int& value) override;
 
   virtual void write(int value) override;
 

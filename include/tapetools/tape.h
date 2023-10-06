@@ -8,7 +8,7 @@ class Tape {
  public:
   virtual ~Tape() {}
 
-  virtual int read() = 0;
+  virtual bool read(int& value) = 0;
 
   virtual void write(int value) = 0;
 
