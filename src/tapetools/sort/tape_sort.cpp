@@ -5,6 +5,8 @@
 #include <fstream>
 #include <utility>
 
+#include "block_buffer.h"
+
 namespace tapetools {
 
 TapeSort::TapeSort(std::shared_ptr<Tape> input_tape, std::shared_ptr<Tape> output_tape,
@@ -13,55 +15,57 @@ TapeSort::TapeSort(std::shared_ptr<Tape> input_tape, std::shared_ptr<Tape> outpu
       output_tape_(std::move(output_tape)),
       tape_generator_(std::move(tape_generator)),
       block_size_(block_size),
-      max_buffer_size_(max_buffer_size) {
+      max_buffer_size_(max_buffer_size),
+      max_number_merge_candidates_(max_buffer_size_ / block_size_) {
+  if (max_number_merge_candidates_ < 2) {
+    throw std::runtime_error("Error. max_buffer_size should allow to store at least two blocks of size block_size");
+  }
   std::filesystem::remove_all(tmp_data_dir_);
   std::filesystem::create_directory(tmp_data_dir_);
 }
 
+TapeSort::~TapeSort() { std::filesystem::remove_all(tmp_data_dir_); }
+
 void TapeSort::sort() {
-  // Divide input array on blocks of size M, sort them and store on temporary tapes
+  // Divide input array on blocks of size max_buffer_size, sort them and store on temporary tapes
   size_t number_of_tapes_generated = generateSortedTemporaryTapes();
 
-  // Tape Queue - sorted unmerged temporary tapes
+  // Merge candidates queue
   std::queue<size_t> tape_candidate_id_queue;
   for (size_t i = 0; i < number_of_tapes_generated; ++i) {
     tape_candidate_id_queue.push(i);
   }
 
-  size_t max_number_merge_candidates = max_buffer_size_ / block_size_;
-
-  // Merge tapes
+  // Merge tapes while there are at least two unmerged tapes
   size_t merge_tape_id = number_of_tapes_generated;
   while (tape_candidate_id_queue.size() > 1) {
     std::vector<size_t> merge_candidates;
-    while (merge_candidates.size() < max_number_merge_candidates && !tape_candidate_id_queue.empty()) {
+    while (merge_candidates.size() < max_number_merge_candidates_ && !tape_candidate_id_queue.empty()) {
       merge_candidates.push_back(tape_candidate_id_queue.front());
       tape_candidate_id_queue.pop();
     }
-    bool is_merged = merge(merge_candidates, merge_tape_id);
-    if (is_merged) {
-      tape_candidate_id_queue.push(merge_tape_id++);
-    }
+    merge(merge_candidates, merge_tape_id);
+    tape_candidate_id_queue.push(merge_tape_id);
+    ++merge_tape_id;
   }
 
   // Write to output
   size_t sorted_tape_id = tape_candidate_id_queue.front();
-  std::string sorted_tape_name = tmp_data_dir_ + "/" + std::to_string(sorted_tape_id);
-  auto sorted_tape = tape_generator_->createTape(sorted_tape_name.c_str());
+  auto sorted_tape = openTape(sorted_tape_id);
 
   std::vector<int> buffer(max_buffer_size_);
-  for (size_t read_values_count = sorted_tape->readBlock(buffer.data(), max_buffer_size_); read_values_count != 0;
-       read_values_count = sorted_tape->readBlock(buffer.data(), max_buffer_size_)) {
+  size_t read_values_count;
+  do {
+    read_values_count = sorted_tape->readBlock(buffer.data(), max_buffer_size_);
     output_tape_->writeBlock(buffer.data(), read_values_count);
-  }
-  std::filesystem::remove_all(tmp_data_dir_);
+  } while (read_values_count != 0);
 }
 
 bool TapeSort::merge(std::vector<size_t> const& merge_candidates_id, size_t merge_tape_id) {
+  // Tape pointers for corresponding buffer blocks
   std::vector<std::unique_ptr<Tape>> tapes_to_merge;
   for (size_t id : merge_candidates_id) {
-    std::string tape_name = tmp_data_dir_ + "/" + std::to_string(id);
-    tapes_to_merge.emplace_back(tape_generator_->createTape(tape_name.c_str()));
+    tapes_to_merge.emplace_back(openTape(id));
   }
 
   // For each of merge candidates load its block
@@ -89,7 +93,7 @@ bool TapeSort::merge(std::vector<size_t> const& merge_candidates_id, size_t merg
   }
 
   // Create output tape
-  std::unique_ptr<Tape> output_tape = createTemporaryTape(merge_tape_id);
+  std::unique_ptr<Tape> output_tape = openTape(merge_tape_id);
   // Block of output tape stored in RAM
   std::vector<int> out_block;
 
@@ -133,15 +137,17 @@ size_t TapeSort::generateSortedTemporaryTapes() {
   size_t values_read_count = 0;
   while ((values_read_count = input_tape_->readBlock(buffer.data(), max_buffer_size_))) {
     std::sort(buffer.begin(), buffer.begin() + static_cast<long>(values_read_count));
-    createTemporaryTape(number_of_tapes_generated++)->writeBlock(buffer.data(), values_read_count);
+    openTape(number_of_tapes_generated++)->writeBlock(buffer.data(), values_read_count);
   }
 
   return number_of_tapes_generated;
 }
 
-std::unique_ptr<Tape> TapeSort::createTemporaryTape(size_t tape_id) const {
+std::unique_ptr<Tape> TapeSort::openTape(size_t tape_id) const {
   std::string tmp_tape_name = tmp_data_dir_ + "/" + std::to_string(tape_id);
-  std::ofstream{tmp_tape_name};
+  if (!std::filesystem::exists(tmp_tape_name)) {
+    std::ofstream{tmp_tape_name};
+  }
 
   return std::unique_ptr<Tape>(tape_generator_->createTape(tmp_tape_name.c_str()));
 }
