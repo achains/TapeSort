@@ -44,7 +44,17 @@ void TapeSort::sort() {
     }
   }
 
-  std::cerr << "foo";
+  // Write to output
+  size_t sorted_tape_id = tape_candidate_id_queue.front();
+  std::string sorted_tape_name = tmp_data_dir_ + "/" + std::to_string(sorted_tape_id);
+  auto sorted_tape = tape_generator_->createTape(sorted_tape_name.c_str());
+
+  std::vector<int> buffer(max_buffer_size_);
+  for (size_t read_values_count = sorted_tape->readBlock(buffer.data(), max_buffer_size_); read_values_count != 0;
+       read_values_count = sorted_tape->readBlock(buffer.data(), max_buffer_size_)) {
+    output_tape_->writeBlock(buffer.data(), read_values_count);
+  }
+  std::filesystem::remove_all(tmp_data_dir_);
 }
 
 bool TapeSort::merge(std::vector<size_t> const& merge_candidates_id, size_t merge_tape_id) {

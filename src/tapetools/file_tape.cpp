@@ -21,7 +21,8 @@ void FileTape::write(int value) {
 }
 
 void FileTape::moveForward() {
-  if (get_p_ == std::fstream::end || put_p_ == std::fstream::end) {
+  int tmp_value;
+  if (!read(tmp_value)) {
     throw std::runtime_error("Error. Move forward out of bounds.");
   }
   updateStreamPos(get_p_ + std::streamoff(sizeof(int)), put_p_ + std::streamoff(sizeof(int)));

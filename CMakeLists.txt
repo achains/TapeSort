@@ -6,7 +6,9 @@ set(CMAKE_CXX_STANDARD 17)
 
 option(BUILD_TESTS "Build C++ Unit tests" ON)
 
+add_subdirectory(external)
 add_subdirectory(src)
+
 if (${BUILD_TESTS})
     add_subdirectory(tests)
 endif ()
