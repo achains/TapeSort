@@ -68,63 +68,23 @@ bool TapeSort::merge(std::vector<size_t> const& merge_candidates_id, size_t merg
     tapes_to_merge.emplace_back(openTape(id));
   }
 
-  // For each of merge candidates load its block
-  std::vector<std::pair<std::vector<int>, size_t>> tape_block_buffer(tapes_to_merge.size(),
-                                                                     {std::vector<int>(block_size_), 0});
-  for (size_t i = 0; i < tape_block_buffer.size(); ++i) {
-    tape_block_buffer[i].second = tapes_to_merge[i]->readBlock(tape_block_buffer[i].first.data(), block_size_);
-  }
+  // Output tape for merge result
+  std::unique_ptr<Tape> merged_tape = openTape(merge_tape_id);
+  std::vector<int> merged_block;
 
-  // Priority queue for block merging
-  struct BufferKey {
-    size_t buffer_id;
-    size_t buffer_block_pos;
-  };
+  BlockBuffer block_buffer(std::move(tapes_to_merge), block_size_);
+  while (!block_buffer.isEmpty()) {
+    merged_block.push_back(block_buffer.getTopValue());
+    block_buffer.popTopValue();
 
-  auto comp = [&tape_block_buffer](BufferKey lhs, BufferKey rhs) {
-    return tape_block_buffer[lhs.buffer_id].first[lhs.buffer_block_pos] >
-           tape_block_buffer[rhs.buffer_id].first[rhs.buffer_block_pos];
-  };
-  std::priority_queue<BufferKey, std::vector<BufferKey>, decltype(comp)> pq(comp);
-  for (size_t i = 0; i < tape_block_buffer.size(); ++i) {
-    if (tape_block_buffer[i].second != 0) {
-      pq.emplace(BufferKey{i, 0});
+    if (merged_block.size() == block_size_) {
+      merged_tape->writeBlock(merged_block.data(), block_size_);
+      merged_block.clear();
     }
   }
 
-  // Create output tape
-  std::unique_ptr<Tape> output_tape = openTape(merge_tape_id);
-  // Block of output tape stored in RAM
-  std::vector<int> out_block;
-
-  // Merge tapes
-  while (!pq.empty()) {
-    BufferKey min_buffer_key = pq.top();
-    pq.pop();
-
-    // Push min value into output block
-    out_block.push_back(tape_block_buffer[min_buffer_key.buffer_id].first[min_buffer_key.buffer_block_pos]);
-    if (out_block.size() == block_size_) {
-      output_tape->writeBlock(out_block.data(), block_size_);
-      out_block.clear();
-    }
-
-    bool block_is_exhausted =
-        (min_buffer_key.buffer_block_pos + 1 == tape_block_buffer[min_buffer_key.buffer_id].second);
-    // Update block with next one from corresponding tape if needed
-    if (block_is_exhausted) {
-      tape_block_buffer[min_buffer_key.buffer_id].second = tapes_to_merge[min_buffer_key.buffer_id]->readBlock(
-          tape_block_buffer[min_buffer_key.buffer_id].first.data(), block_size_);
-      if (tape_block_buffer[min_buffer_key.buffer_id].second != 0) {
-        pq.emplace(BufferKey{min_buffer_key.buffer_id, 0});
-      }
-    } else {
-      pq.emplace(BufferKey{min_buffer_key.buffer_id, min_buffer_key.buffer_block_pos + 1});
-    }
-  }
-
-  if (!out_block.empty()) {
-    output_tape->writeBlock(out_block.data(), out_block.size());
+  if (!merged_block.empty()) {
+    merged_tape->writeBlock(merged_block.data(), merged_block.size());
   }
 
   return true;
