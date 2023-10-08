@@ -27,8 +27,17 @@ class FileTape : public Tape {
 
   void writeBlock(const int* block_ptr, size_t block_size) override;
 
+  void setIODelay(const char* config_path);
+
  private:
   void updateStreamPos(std::streampos get_p, std::streampos put_p);
+
+  struct IODelay {
+    size_t read_ms = 0;
+    size_t write_ms = 0;
+    size_t move_ms = 0;
+    size_t rewind_ms = 0;
+  } io_delay_;
 
   std::fstream tape_stream_;
   std::streampos get_p_ = std::fstream::beg;
