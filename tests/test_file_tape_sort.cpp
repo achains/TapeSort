@@ -75,3 +75,51 @@ TEST_F(SortedTape, Sort100) {
   ASSERT_EQ(getTapeFileContent(getInputName()).size(), getTapeFileContent(getOutputName()).size());
 }
 
+TEST_F(SortedTape, Sort10000) {
+  fillWithRandom(10000);
+  size_t block_size = 100;
+  size_t buffer_size = 500;
+
+  TapeSort(tape_, output_tape_, std::make_shared<FileTapeCreator>(), block_size, buffer_size).sort();
+  ASSERT_EQ(isSorted(getOutputName()), true);
+  ASSERT_EQ(getTapeFileContent(getInputName()).size(), getTapeFileContent(getOutputName()).size());
+}
+
+TEST_F(SortedTape, BigBufferSize) {
+  fillWithRandom(100);
+  size_t block_size = 5;
+  size_t buffer_size = 1000;
+
+  TapeSort(tape_, output_tape_, std::make_shared<FileTapeCreator>(), block_size, buffer_size).sort();
+  ASSERT_EQ(isSorted(getOutputName()), true);
+  ASSERT_EQ(getTapeFileContent(getInputName()).size(), getTapeFileContent(getOutputName()).size());
+}
+
+TEST_F(SortedTape, PrimeSizes) {
+  fillWithRandom(83);
+  size_t block_size = 7;
+  size_t buffer_size = 23;
+
+  TapeSort(tape_, output_tape_, std::make_shared<FileTapeCreator>(), block_size, buffer_size).sort();
+  ASSERT_EQ(isSorted(getOutputName()), true);
+  ASSERT_EQ(getTapeFileContent(getInputName()).size(), getTapeFileContent(getOutputName()).size());
+}
+
+TEST_F(SortedTape, SmallBlockSize) {
+  fillWithRandom(100);
+  size_t block_size = 1;
+  size_t buffer_size = 2;
+
+  TapeSort(tape_, output_tape_, std::make_shared<FileTapeCreator>(), block_size, buffer_size).sort();
+  ASSERT_EQ(isSorted(getOutputName()), true);
+  ASSERT_EQ(getTapeFileContent(getInputName()).size(), getTapeFileContent(getOutputName()).size());
+}
+
+TEST_F(SortedTape, NotEnoughBlocks) {
+  fillWithRandom(100);
+  size_t block_size = 7;
+  size_t buffer_size = 10;
+
+  ASSERT_THROW(TapeSort(tape_, output_tape_, std::make_shared<FileTapeCreator>(), block_size, buffer_size).sort(),
+               std::runtime_error);
+}
