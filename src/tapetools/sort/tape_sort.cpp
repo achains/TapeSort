@@ -44,7 +44,8 @@ void TapeSort::sort() {
       merge_candidates.push_back(tape_candidate_id_queue.front());
       tape_candidate_id_queue.pop();
     }
-    merge(merge_candidates, merge_tape_id);
+    std::unique_ptr<Tape> merged_tape = openTape(merge_tape_id);
+    merge(merge_candidates, merged_tape.get());
     tape_candidate_id_queue.push(merge_tape_id);
     ++merge_tape_id;
   }
@@ -61,15 +62,13 @@ void TapeSort::sort() {
   } while (read_values_count != 0);
 }
 
-bool TapeSort::merge(std::vector<size_t> const& merge_candidates_id, size_t merge_tape_id) {
+bool TapeSort::merge(std::vector<size_t> const& merge_candidates_id, Tape* merged_tape) {
   // Tape pointers for corresponding buffer blocks
   std::vector<std::unique_ptr<Tape>> tapes_to_merge;
   for (size_t id : merge_candidates_id) {
     tapes_to_merge.emplace_back(openTape(id));
   }
 
-  // Output tape for merge result
-  std::unique_ptr<Tape> merged_tape = openTape(merge_tape_id);
   std::vector<int> merged_block;
 
   BlockBuffer block_buffer(std::move(tapes_to_merge), block_size_);

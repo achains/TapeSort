@@ -28,7 +28,7 @@ class TapeSort {
 
   size_t generateSortedTemporaryTapes();
 
-  bool merge(std::vector<size_t> const& merge_candidates_id, size_t merge_tape_id);
+  bool merge(std::vector<size_t> const& merge_candidates_id, Tape* merged_tape);
 
   std::unique_ptr<Tape> openTape(size_t tape_id) const;
 };
