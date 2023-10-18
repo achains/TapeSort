@@ -38,28 +38,21 @@ void TapeSort::sort() {
 
   // Merge tapes while there are at least two unmerged tapes
   size_t merge_tape_id = number_of_tapes_generated;
-  while (tape_candidate_id_queue.size() > 1) {
+  while (!tape_candidate_id_queue.empty()) {
     std::vector<size_t> merge_candidates;
     while (merge_candidates.size() < max_number_merge_candidates_ && !tape_candidate_id_queue.empty()) {
       merge_candidates.push_back(tape_candidate_id_queue.front());
       tape_candidate_id_queue.pop();
+    }
+    if (tape_candidate_id_queue.empty()) {
+      merge(merge_candidates, output_tape_.get());
+      return;
     }
     std::unique_ptr<Tape> merged_tape = openTape(merge_tape_id);
     merge(merge_candidates, merged_tape.get());
     tape_candidate_id_queue.push(merge_tape_id);
     ++merge_tape_id;
   }
-
-  // Write to output
-  size_t sorted_tape_id = tape_candidate_id_queue.front();
-  auto sorted_tape = openTape(sorted_tape_id);
-
-  std::vector<int> buffer(max_buffer_size_);
-  size_t read_values_count;
-  do {
-    read_values_count = sorted_tape->readBlock(buffer.data(), max_buffer_size_);
-    output_tape_->writeBlock(buffer.data(), read_values_count);
-  } while (read_values_count != 0);
 }
 
 bool TapeSort::merge(std::vector<size_t> const& merge_candidates_id, Tape* merged_tape) {
