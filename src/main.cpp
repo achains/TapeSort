@@ -17,11 +17,13 @@ int main(int argc, char** argv) {
   const char* output_tape_path = argv[3];
   const char* output_tape_config = argv[4];
 
-  std::shared_ptr<tapetools::FileTape> input_tape(tapetools::FileTapeCreator().createTape(input_tape_path));
-  input_tape->setIODelay(input_tape_config);
+  auto tape_creator = std::make_shared<tapetools::FileTapeCreator>();
 
-  std::shared_ptr<tapetools::FileTape> output_tape(tapetools::FileTapeCreator().createTape(output_tape_path));
-  output_tape->setIODelay(output_tape_config);
+  std::shared_ptr<tapetools::Tape> input_tape(tape_creator->createTape(input_tape_path));
+  dynamic_cast<tapetools::FileTape*>(input_tape.get())->setIODelay(input_tape_config);
+
+  std::shared_ptr<tapetools::Tape> output_tape(tape_creator->createTape(output_tape_path));
+  dynamic_cast<tapetools::FileTape*>(output_tape.get())->setIODelay(output_tape_config);
 
   size_t buffer_size = 100;
   size_t block_size = 20;
@@ -32,9 +34,7 @@ int main(int argc, char** argv) {
   }
 
   try {
-    tapetools::TapeSort(input_tape, output_tape, std::make_shared<tapetools::FileTapeCreator>(), block_size,
-                        buffer_size)
-        .sort();
+    tapetools::TapeSort(input_tape, output_tape, tape_creator, block_size, buffer_size).sort();
   } catch (std::runtime_error const& e) {
     std::cerr << e.what() << std::endl;
     return 1;
