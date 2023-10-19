@@ -1,8 +1,6 @@
 #include "tapetools/sort/tape_sort.h"
 
 #include <algorithm>
-#include <filesystem>
-#include <fstream>
 #include <utility>
 
 #include "block_buffer.h"
@@ -20,11 +18,7 @@ TapeSort::TapeSort(std::shared_ptr<Tape> input_tape, std::shared_ptr<Tape> outpu
   if (max_number_merge_candidates_ < 2) {
     throw std::runtime_error("Error. max_buffer_size should allow to store at least two blocks of size block_size");
   }
-  std::filesystem::remove_all(tmp_data_dir_);
-  std::filesystem::create_directory(tmp_data_dir_);
 }
-
-TapeSort::~TapeSort() { std::filesystem::remove_all(tmp_data_dir_); }
 
 void TapeSort::sort() {
   // Divide input array on blocks of size max_buffer_size, sort them and store on temporary tapes
@@ -48,7 +42,7 @@ void TapeSort::sort() {
       merge(merge_candidates, output_tape_.get());
       return;
     }
-    std::unique_ptr<Tape> merged_tape = openTape(merge_tape_id);
+    std::unique_ptr<Tape> merged_tape(tape_generator_->createTape(std::to_string(merge_tape_id).c_str()));
     merge(merge_candidates, merged_tape.get());
     tape_candidate_id_queue.push(merge_tape_id);
     ++merge_tape_id;
@@ -59,7 +53,7 @@ bool TapeSort::merge(std::vector<size_t> const& merge_candidates_id, Tape* merge
   // Tape pointers for corresponding buffer blocks
   std::vector<std::unique_ptr<Tape>> tapes_to_merge;
   for (size_t id : merge_candidates_id) {
-    tapes_to_merge.emplace_back(openTape(id));
+    tapes_to_merge.emplace_back(tape_generator_->createTape(std::to_string(id).c_str()));
   }
 
   std::vector<int> merged_block;
@@ -89,18 +83,10 @@ size_t TapeSort::generateSortedTemporaryTapes() {
   size_t values_read_count = 0;
   while ((values_read_count = input_tape_->readBlock(buffer.data(), max_buffer_size_))) {
     std::sort(buffer.begin(), buffer.begin() + static_cast<long>(values_read_count));
-    openTape(number_of_tapes_generated++)->writeBlock(buffer.data(), values_read_count);
+    std::unique_ptr<Tape>(tape_generator_->createTape(std::to_string(number_of_tapes_generated++).c_str()))
+        ->writeBlock(buffer.data(), values_read_count);
   }
 
   return number_of_tapes_generated;
-}
-
-std::unique_ptr<Tape> TapeSort::openTape(size_t tape_id) const {
-  std::string tmp_tape_name = tmp_data_dir_ + "/" + std::to_string(tape_id);
-  if (!std::filesystem::exists(tmp_tape_name)) {
-    std::ofstream{tmp_tape_name};
-  }
-
-  return std::unique_ptr<Tape>(tape_generator_->createTape(tmp_tape_name.c_str()));
 }
 }  // namespace tapetools

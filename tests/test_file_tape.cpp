@@ -10,9 +10,7 @@ using namespace tapetools;
 class TemporaryTape : public ::testing::Test {
  protected:
   void SetUp() override {
-    std::filesystem::create_directory(tmp_dir_);
-    { std::ofstream tmp(tmp_dir_ / tape_name_); }
-    tape_.reset(FileTapeCreator().createTape((tmp_dir_ / tape_name_).c_str()));
+    tape_.reset(FileTapeCreator(tmp_dir_.c_str()).createTape(tape_name_));
   }
 
   void TearDown() override { std::filesystem::remove_all(tmp_dir_); }
