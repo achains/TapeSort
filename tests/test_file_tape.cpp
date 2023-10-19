@@ -9,9 +9,7 @@ using namespace tapetools;
 
 class TemporaryTape : public ::testing::Test {
  protected:
-  void SetUp() override {
-    tape_.reset(FileTapeCreator(tmp_dir_.c_str()).createTape(tape_name_));
-  }
+  void SetUp() override { tape_ = FileTapeCreator(tmp_dir_.c_str()).createTape(tape_name_); }
 
   void TearDown() override { std::filesystem::remove_all(tmp_dir_); }
 
@@ -26,7 +24,7 @@ class TemporaryTape : public ::testing::Test {
     return file_content;
   }
 
-  std::unique_ptr<tapetools::FileTape> tape_;
+  std::unique_ptr<tapetools::Tape> tape_;
 
  private:
   std::filesystem::path tmp_dir_ = "tests_tmp";

@@ -8,7 +8,7 @@ class FileTapeCreator : public TapeCreator {
  public:
   FileTapeCreator(const char* tape_dir = "");
 
-  FileTape* createTape(const char* tape_source) override;
+  std::unique_ptr<Tape> createTape(const char* tape_source) override;
 
  private:
   const char* tape_dir_ = "";

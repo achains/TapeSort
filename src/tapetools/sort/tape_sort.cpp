@@ -83,7 +83,7 @@ size_t TapeSort::generateSortedTemporaryTapes() {
   size_t values_read_count = 0;
   while ((values_read_count = input_tape_->readBlock(buffer.data(), max_buffer_size_))) {
     std::sort(buffer.begin(), buffer.begin() + static_cast<long>(values_read_count));
-    std::unique_ptr<Tape>(tape_generator_->createTape(std::to_string(number_of_tapes_generated++).c_str()))
+    tape_generator_->createTape(std::to_string(number_of_tapes_generated++).c_str())
         ->writeBlock(buffer.data(), values_read_count);
   }
 

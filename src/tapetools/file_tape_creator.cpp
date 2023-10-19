@@ -12,7 +12,8 @@ FileTapeCreator::FileTapeCreator(const char* tape_dir) : tape_dir_(tape_dir) {
   }
 }
 
-FileTape* FileTapeCreator::createTape(const char* tape_source) {
-  return new FileTape((std::filesystem::path(tape_dir_) / std::filesystem::path(tape_source)).c_str());
+std::unique_ptr<Tape> FileTapeCreator::createTape(const char* tape_source) {
+  return std::unique_ptr<Tape>(
+      new FileTape((std::filesystem::path(tape_dir_) / std::filesystem::path(tape_source)).c_str()));
 }
 }  // namespace tapetools

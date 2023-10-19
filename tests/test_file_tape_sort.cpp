@@ -12,8 +12,8 @@ class SortedTape : public ::testing::Test {
  protected:
   void SetUp() override {
     tape_creator_ = std::make_shared<FileTapeCreator>(tmp_dir_.c_str());
-    tape_.reset(tape_creator_->createTape(input_tape_name_));
-    output_tape_.reset(tape_creator_->createTape(output_tape_name_));
+    tape_ = tape_creator_->createTape(input_tape_name_);
+    output_tape_ = tape_creator_->createTape(output_tape_name_);
   }
 
   void fillWithRandom(size_t tape_size) {
@@ -50,8 +50,8 @@ class SortedTape : public ::testing::Test {
     return file_content;
   }
 
-  std::shared_ptr<FileTape> tape_;
-  std::shared_ptr<FileTape> output_tape_;
+  std::shared_ptr<Tape> tape_;
+  std::shared_ptr<Tape> output_tape_;
   std::shared_ptr<FileTapeCreator> tape_creator_;
 
  private:
