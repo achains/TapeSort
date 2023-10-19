@@ -1,11 +1,16 @@
 #include "tapetools/file_tape.h"
 
+#include <filesystem>
 #include <thread>
 
 namespace tapetools {
 
-FileTape::FileTape(const char* tape_path)
-    : tape_stream_(tape_path, std::fstream::in | std::fstream::out | std::fstream::binary) {}
+FileTape::FileTape(const char* tape_path) {
+  if (!std::filesystem::exists(tape_path)) {
+    std::ofstream{tape_path};
+  }
+  tape_stream_ = std::fstream{tape_path, std::fstream::in | std::fstream::out | std::fstream::binary};
+}
 
 bool FileTape::read(int& value) {
   std::this_thread::sleep_for(std::chrono::milliseconds(io_delay_.read_ms));
